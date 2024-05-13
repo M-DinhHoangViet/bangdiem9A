@@ -6,8 +6,10 @@
         .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-gap: 10px;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
             width: 300px;
+            height: 300px;
             margin: 0 auto;
         }
 
@@ -15,25 +17,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 40px;
-            background-color: #eee;
+            font-size: 48px;
+            background-color: lightgray;
             cursor: pointer;
-        }
-
-        .cell:hover {
-            background-color: #ddd;
-        }
-
-        .cell.x {
-            color: #f00;
-        }
-
-        .cell.o {
-            color: #00f;
         }
     </style>
 </head>
 <body>
+    <p> hi</p>
     <div class="board">
         <div class="cell"></div>
         <div class="cell"></div>
@@ -48,17 +39,98 @@
 
     <script>
         const cells = document.querySelectorAll('.cell');
-        let currentPlayer = 'x';
+        let currentPlayer = 'X';
 
         cells.forEach(cell => {
-            cell.addEventListener('click', handleCellClick);
+            cell.addEventListener('click', () => {
+                if (cell.textContent === '') {
+                    cell.textContent = currentPlayer;
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    if (!checkWin() && currentPlayer === 'O') {
+                        makeBestMove();
+                    }
+                }
+            });
         });
 
-        function handleCellClick() {
-            if (this.textContent !== '') return;
-            this.textContent = currentPlayer;
-            this.classList.add(currentPlayer);
-            currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+        function makeBestMove() {
+            let bestScore = -Infinity;
+            let move;
+            for (let i = 0; i < cells.length; i++) {
+                if (cells[i].textContent === '') {
+                    cells[i].textContent = 'O';
+                    let score = minimax(cells, 0, false);
+                    cells[i].textContent = '';
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
+                }
+            }
+            cells[move].textContent = 'O';
+            currentPlayer = 'X';
+        }
+
+        function minimax(cells, depth, isMaximizing) {
+            let scores = {
+                X: -1,
+                O: 1,
+                tie: 0
+            };
+
+            if (checkWin()) {
+                return scores[checkWin()];
+            }
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < cells.length; i++) {
+                    if (cells[i].textContent === '') {
+                        cells[i].textContent = 'O';
+                        let score = minimax(cells, depth + 1, false);
+                        cells[i].textContent = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < cells.length; i++) {
+                    if (cells[i].textContent === '') {
+                        cells[i].textContent = 'X';
+                        let score = minimax(cells, depth + 1, true);
+                        cells[i].textContent = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function checkWin() {
+            const winningConditions = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]
+            ];
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (cells[a].textContent !== '' && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent) {
+                    return cells[a].textContent;
+                }
+            }
+
+            if (Array.from(cells).every(cell => cell.textContent !== '')) {
+                return 'tie';
+            }
+
+            return null;
         }
     </script>
 </body>
